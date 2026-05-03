@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!-- The following is my frontend code which communicates with the backend. primarily done
+ with fetch and response. -->
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Notes Assistant</title>
+    <style>
+        body{font-family: Helvetica,sans-serif;
+            max-width: 1000px;
+            margin: 10px auto;
+            padding: 10px;
+            background: #89CFF0;}
+        h1{color:#333;}
+        textarea{width: 100%;
+            height: 300px;
+            padding: 10px;
+            font-size: 12px;
+            border-style: dotted;
+            border: 1px 
+            solid #ccc;}
+        button {margin-top: 10px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .card{
+            background: aliceblue;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .card h3{margin-top: 0; color: #4CAF50;}
+        #loading{display: none; margin-top: 10px; color: #888;}
+        #error{color: #8B0000; margin-top: 10px;}
+    </style>
+</head>
+<body>
+    <h1>EdAsh Summarizer</h1>
+    <textarea id="inputText" placeholder="Paste your notes here..."></textarea>
+    <br>
+    <button onclick="summarize()">Generate Summary</button>
+    <p id="loading">Summarizing...Give me a moment!</p>
+    <p id="error"></p>
+    <div id="results" style="display:none">
+        <div class="card">
+            <h3>Here is the summary:</h3>
+            <p id="summary"></p>
+        </div>     
+        <div class="card">
+            <h3>Here are some key points to know</h3>
+            <ul id="keyPoints"></ul>
+        </div>
+        <div class="card">
+            <h3>I think the Title should be: </h3>
+            <p id="title"></p>
+        </div>
+    </div>
+    <script>
+        //Utilised async here so the web page won't lag mid function
+        async function summarize() {
+            //retrieves text from the user
+            const text = document.getElementById('inputText').value;
+            //Resets UI state after each rrequest
+            document.getElementById('error').innerText = '';
+            document.getElementById('loading').style.display='block';
+            document.getElementById('results').style.display= 'none';
+            //This send the text to the backend
+            const response= await fetch('http://localhost:5000/summarize',
+            {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({text})
+            }
+        );
+            //Recieves a response from the backend
+            const data = await response.json();
+            //changes the status of the button once data is recieved, ready for the next summary
+            document.getElementById('loading').style.display= 'none';
+            //In error cases..
+            if (data.error){
+                document.getElementById('error').innerText= data.error;
+                return;
+            }
+
+            document.getElementById('title').innerText= data.title;
+            document.getElementById('summary').innerText= data.summary;
+            //convert the key_points array to bullet list 
+            document.getElementById('keyPoints').innerHTML= 
+                data.key_points.map(point => `<p>• ${point}</p>`).join('');
+
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
